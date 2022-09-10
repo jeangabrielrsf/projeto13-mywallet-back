@@ -24,6 +24,11 @@ app.post("/sign-up", async (req, res) => {
 		const cryptedPassword = bcrypt.hashSync(password, 13);
 		console.log(compareSync("1234567", cryptedPassword));
 
+		const userExists = await db.collection("users").findOne({ email });
+		if (userExists) {
+			return res.status(409).send({ message: "Email já cadastrado!" });
+		}
+
 		await db.collection("users").insertOne({
 			name,
 			email,
@@ -40,7 +45,22 @@ app.post("/sign-up", async (req, res) => {
 app.post("/login", async (req, res) => {
 	try {
 		const { email, password } = req.body;
-		return res.sendStatus(201);
+
+		const userExists = await db.collection("users").findOne({ email });
+		if (!userExists) {
+			return res.status(404).send({ message: "Usuário não cadastrado!" });
+		}
+		const passwordCheck = compareSync(password, userExists.password);
+		if (!passwordCheck) {
+			return res.status(404).send({ message: "Email e/ou senha incorretos!" });
+		}
+
+		const token = uuid();
+		await db.collection("sessions").insertOne({
+			token,
+			userID: userExists._id,
+		});
+		return res.status(200).send(token);
 	} catch (error) {
 		console.log(error);
 		return res.sendStatus(500);
