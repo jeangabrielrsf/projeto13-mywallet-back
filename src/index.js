@@ -60,7 +60,22 @@ app.post("/login", async (req, res) => {
 			token,
 			userID: userExists._id,
 		});
-		return res.status(200).send(token);
+		return res.status(200).send({
+			token,
+			name: userExists.name,
+		});
+	} catch (error) {
+		console.log(error);
+		return res.sendStatus(500);
+	}
+});
+
+app.get("/transactions", async (req, res) => {
+	try {
+		const { authorization } = req.headers;
+		console.log(authorization);
+
+		return res.sendStatus(200);
 	} catch (error) {
 		console.log(error);
 		return res.sendStatus(500);
