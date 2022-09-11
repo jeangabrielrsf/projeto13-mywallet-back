@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import joi from "joi";
 import { v4 as uuid } from "uuid";
 import bcrypt, { compareSync } from "bcrypt";
+import dayjs from "dayjs";
 
 dotenv.config();
 
@@ -22,7 +23,6 @@ app.post("/sign-up", async (req, res) => {
 	try {
 		const { name, email, password } = req.body;
 		const cryptedPassword = bcrypt.hashSync(password, 13);
-		console.log(compareSync("1234567", cryptedPassword));
 
 		const userExists = await db.collection("users").findOne({ email });
 		if (userExists) {
@@ -73,9 +73,51 @@ app.post("/login", async (req, res) => {
 app.get("/transactions", async (req, res) => {
 	try {
 		const { authorization } = req.headers;
-		console.log(authorization);
+		const token = authorization?.replace("Bearer ", "");
 
-		return res.sendStatus(200);
+		if (!token) {
+			return res.sendStatus(401);
+		}
+
+		const session = await db.collection("sessions").findOne({ token });
+		if (!session) {
+			return res.sendStatus(401);
+		}
+
+		const userTransactions = await db
+			.collection("transactions")
+			.find({ userID: session.userID })
+			.toArray();
+
+		return res.status(200).send(userTransactions);
+	} catch (error) {
+		console.log(error);
+		return res.sendStatus(500);
+	}
+});
+
+app.post("/transactions", async (req, res) => {
+	try {
+		const { authorization } = req.headers;
+		const { value, description } = req.body;
+		const token = authorization?.replace("Bearer ", "");
+
+		if (!token) {
+			return res.sendStatus(401);
+		}
+
+		const session = await db.collection("sessions").findOne({ token });
+		if (!session) {
+			return res.sendStatus(401);
+		}
+
+		await db.collection("transactions").insertOne({
+			value,
+			description,
+			userID: session.userID,
+			date: dayjs().format("DD/MM"),
+		});
+		return res.sendStatus(201);
 	} catch (error) {
 		console.log(error);
 		return res.sendStatus(500);
