@@ -58,6 +58,7 @@ app.post("/login", async (req, res) => {
 		const token = uuid();
 		await db.collection("sessions").insertOne({
 			token,
+			time: Date.now(),
 			userID: userExists._id,
 		});
 		return res.status(200).send({
@@ -140,5 +141,22 @@ app.delete("/sign-out", async (req, res) => {
 		return res.sendStatus(500);
 	}
 });
+
+setInterval(async function () {
+	try {
+		const sessions = await db.collection("sessions").find().toArray();
+
+		sessions.map((session) => {
+			let delta = Date.now() - session.time;
+			if (delta > 600000) {
+				db.collection("sessions").deleteOne({ _id: session._id });
+			}
+		});
+		console.log("tchau sessão");
+	} catch (error) {
+		console.log(error);
+		return res.sendStatus(500);
+	}
+}, 300000);
 
 app.listen(5000, () => console.log("Listening on port 5000..."));
