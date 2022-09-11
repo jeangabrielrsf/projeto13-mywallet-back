@@ -104,12 +104,12 @@ app.post("/transactions", async (req, res) => {
 		const token = authorization?.replace("Bearer ", "");
 
 		if (!token) {
-			return res.status(401).send("sem token aqui");
+			return res.sendStatus(401);
 		}
 
 		const session = await db.collection("sessions").findOne({ token });
 		if (!session) {
-			return res.status(401).send("nao tem session amigo");
+			return res.sendStatus(401);
 		}
 
 		await db.collection("transactions").insertOne({
