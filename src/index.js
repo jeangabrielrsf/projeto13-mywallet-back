@@ -99,21 +99,22 @@ app.get("/transactions", async (req, res) => {
 app.post("/transactions", async (req, res) => {
 	try {
 		const { authorization } = req.headers;
-		const { value, description } = req.body;
+		const { value, description, type } = req.body;
 		const token = authorization?.replace("Bearer ", "");
 
 		if (!token) {
-			return res.sendStatus(401);
+			return res.status(401).send("sem token aqui");
 		}
 
 		const session = await db.collection("sessions").findOne({ token });
 		if (!session) {
-			return res.sendStatus(401);
+			return res.status(401).send("nao tem session amigo");
 		}
 
 		await db.collection("transactions").insertOne({
 			value,
 			description,
+			type,
 			userID: session.userID,
 			date: dayjs().format("DD/MM"),
 		});
