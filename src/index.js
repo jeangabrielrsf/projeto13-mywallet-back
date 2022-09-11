@@ -125,4 +125,20 @@ app.post("/transactions", async (req, res) => {
 	}
 });
 
+app.delete("/sign-out", async (req, res) => {
+	try {
+		const { authorization } = req.headers;
+		const token = authorization?.replace("Bearer ", "");
+		if (!token) {
+			return res.sendStatus(401);
+		}
+
+		await db.collection("sessions").deleteOne({ token });
+		return res.status(200).send({ message: "Usuário deslogado com sucesso!" });
+	} catch (error) {
+		console.log(error);
+		return res.sendStatus(500);
+	}
+});
+
 app.listen(5000, () => console.log("Listening on port 5000..."));
