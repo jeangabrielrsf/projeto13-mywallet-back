@@ -152,7 +152,6 @@ setInterval(async function () {
 				db.collection("sessions").deleteOne({ _id: session._id });
 			}
 		});
-		console.log("tchau sessão");
 	} catch (error) {
 		console.log(error);
 		return res.sendStatus(500);
